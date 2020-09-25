@@ -82,12 +82,12 @@ spike["Genotype"] <- c(rep("WT",10), rep("DKO",10))
 ggplot(gene, aes(x=Sample, y=AverageRelConc, fill=Genotype))+
     geom_bar(stat="identity", position = "dodge")+
     ylab("Relative Concentration")+
-    scale_fill_grey(start=0.23, end=0.67)
+    scale_fill_manual(values = c("black", "#818181"))
 
 # plot the average Rel concentration for the spike
 ggplot(spike, aes(x=Sample, y=AverageRelConc, fill=Genotype))+
     geom_bar(stat="identity", position = "dodge")+
     ylab("Relative Concentration")+
-    scale_fill_grey(start=0.23, end=0.67)
+    scale_fill_manual(values = c("black", "#818181"))
 
 
