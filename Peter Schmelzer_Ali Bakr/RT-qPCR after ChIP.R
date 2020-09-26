@@ -189,9 +189,12 @@ overview <- data.frame(
 overview$Genotype <- factor(overview$Genotype, levels = c("WT", "KO"))
 
 # plot the dataframe ---- 
+
+#svg("RTqPCR.svg")
 ggplot(overview, aes(x=primer, y=enrichment, fill=Genotype, width=0.8))+
     geom_bar(stat="identity", position = "dodge")+
     ylab("Enrichment")+
     xlab("Primer pair")+
     scale_fill_manual(values = c("black", "#818181"))
+#dev.off()
 
