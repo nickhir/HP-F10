@@ -2,6 +2,7 @@
 library(ggplot2)
 library(reshape2)
 library(drc)
+library(ggpubr)
 
 # the path might be adjusted and should point to the indicated directory (they are included in the github repository).
 setwd("./digestion-analysis")
@@ -26,8 +27,8 @@ read.data <- function(file) {
     
     # Per lane, calculate the percentage for each band for the respective lane
     output.dataframe <- cbind(output.dataframe, 
-                  upper_band_percentage = upper/(upper+lower), 
-                  lower_band_percentage = lower/(upper+lower))
+                              upper_band_percentage = upper/(upper+lower), 
+                              lower_band_percentage = lower/(upper+lower))
     
     
     # For the negative control we dont expect to see a upper band, because everything should be unmethylated and thus cleaved. 
@@ -35,7 +36,7 @@ read.data <- function(file) {
     # This is why in the next step the substract this value from each upper band
     
     output.dataframe <- cbind(output.dataframe, 
-                  upper_band_percentage_adjusted = output.dataframe$upper_band_percentage-output.dataframe$upper_band_percentage[2])
+                              upper_band_percentage_adjusted = output.dataframe$upper_band_percentage-output.dataframe$upper_band_percentage[2])
     
     
     # For the positive control we dont expect to see a lower band, because everything should be methylated. 
@@ -43,14 +44,14 @@ read.data <- function(file) {
     # This is why in the next step the substract this value from each lower band
     
     output.dataframe <- cbind(output.dataframe, 
-                  lower_band_percentage_adjusted = output.dataframe$lower_band_percentage-output.dataframe$lower_band_percentage[1])
+                              lower_band_percentage_adjusted = output.dataframe$lower_band_percentage-output.dataframe$lower_band_percentage[1])
     
     # Lastly, the upperband is normalized with regard to the adjusted "positive" condition and 
     # the lowerband is normalized with regard to the adjusted "negative" condition
     
     output.dataframe <- cbind(output.dataframe, 
-                  normalized_upper = output.dataframe$upper_band_percentage_adjusted/output.dataframe$upper_band_percentage_adjusted[1],
-                  normalized_lower = output.dataframe$lower_band_percentage_adjusted/output.dataframe$lower_band_percentage_adjusted[2])
+                              normalized_upper = output.dataframe$upper_band_percentage_adjusted/output.dataframe$upper_band_percentage_adjusted[1],
+                              normalized_lower = output.dataframe$lower_band_percentage_adjusted/output.dataframe$lower_band_percentage_adjusted[2])
     
     # for some experminets we observe percentages above 100 or below 0. These make biologically no sense and are set to 100 or 0 respectively.
     # identify position of value in normalized upper  which is greater than 1. If one exists, set the value to one. Other conditions are very similar.
@@ -60,44 +61,39 @@ read.data <- function(file) {
     output.dataframe$normalized_lower[which(output.dataframe$normalized_lower > 1)] = 1
     output.dataframe$normalized_lower[which(output.dataframe$normalized_lower < 0)] = 0
     
-    # At the very end perform a quick sanity check: Adding normalized_upper and normalized_lower should equal 1.
+    # At the very end perform a quick sanity check: 
+    # Adding normalized_upper and normalized_lower should equal 1.
     ifelse(round(output.dataframe$normalized_upper + output.dataframe$normalized_lower, digits=6) == 1, 
            print("Loading successful"), 
            print("!!!ERROR!!! SOMETHING WENT WRONG WHILE LOADING AND MANIPULATING THE INPUT DATA.\n
                  DO NOT CONTINUE THIS WORKFLOW UNTIL LOADING IS SUCCESSFUL"))
     
-
+    
     return(output.dataframe)
 }
 
 
-# read in the data from everybody
+# read in the data 
 nh <- read.data("nh.txt")
-ceren <- read.data("ceren.txt")
 he <- read.data("he.txt")
-iva <- read.data("iva.txt")
 jh <- read.data("jh.txt")
-mb <- read.data("mb.txt")
-sa <- read.data("sa.txt")
 
-# for our further analysis we are only interested in the normalized upper band of every person and the different concentrations of the inhibitor we used.
+
+# for our further analysis we are only interested in the normalized upper band of every person 
+# and the different concentrations of the inhibitor we used.
 
 analysis <- data.frame(
     dose = c(50, 25, 12.5, 6.25, 3.125),
     nh = nh$normalized_upper[4:8],
-    ceren = ceren$normalized_upper[4:8],
     he = he$normalized_upper[4:8],
-    iva = iva$normalized_upper[4:8],
     jh = jh$normalized_upper[4:8],
-    mb = mb$normalized_upper[4:8],
-    sa = sa$normalized_upper[4:8]
 )
 
 
 # we want values between 0 and 1 for our responds
 
 # calculate average
-analysis <- cbind(analysis, mean = rowMeans(analysis[2:8]))
+analysis <- cbind(analysis, mean = rowMeans(analysis[2:4]))
 
 # calculate logistic model function
 model <- drm(mean ~ dose, data = analysis, fct = LL.4())
@@ -113,27 +109,34 @@ fitted_curve <- cbind(DummyDoses, pm)
 
 # for ggplot to work properly dataframe has to be in the _long_ formt
 # also generate data frame wiht average and sd
-long_df <- melt(analysis[1:8], id.vars = "dose")
+long_df <- melt(analysis[1:4], id.vars = "dose")
 
 average <- data.frame(
     dose = c(50, 25, 12.5, 6.25, 3.125),
-    average = rowMeans(analysis[2:8]),
-    sd = matrixStats::rowSds(as.matrix(analysis[2:8]))
+    average = rowMeans(analysis[2:4]),
+    sd = matrixStats::rowSds(as.matrix(analysis[2:4]))
 )
 
-#svg("dose-responds-curve-all.svg")
+
+svg("dose-responds-curve-all.svg")
 ggplot() +
     # plot error bars
     geom_errorbar(data=average, aes(x=dose, ymin=average-sd, ymax=average+sd), width=1.1, size=1, alpha=1)+
     # plot the curve
-    geom_line(data = fitted_curve, aes(x = conc, y = pm), size = 1.25, color = "#333333") +
+    geom_line(data = fitted_curve, aes(x = conc, y = pm), size = 1.25, color = "black") +
     # plot the actual data
     geom_point(data = long_df, aes(x = dose, y = value), shape = 18, size = 2.5, color = "black") +
     # plot the average as a bar
     geom_point(
         data = average, aes(x = dose, y = average), shape = 95, size = 10, color = "#C60B0B") +
-    xlab("Dose [µM]") +
-    ylab("Beta value")+
-    scale_x_continuous(breaks = seq(0, 55, by = 5))
+    xlab("DD880 concentration [µM]") +
+    ylab("M.Sss1 activity")+
+    scale_x_continuous(breaks = seq(0, 55, by = 5))+
+    theme_classic(base_size = 14.5)+
+    grids(linetype="dashed")
 
-#dev.off()
+dev.off()
+
+
+
+
