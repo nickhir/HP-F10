@@ -121,7 +121,7 @@ average <- data.frame(
 svg("dose-responds-curve-all.svg")
 ggplot() +
     # plot error bars
-    geom_errorbar(data=average, aes(x=dose, ymin=average-sd, ymax=average+sd), width=1.1, size=1, alpha=1)+
+    #geom_errorbar(data=average, aes(x=dose, ymin=average-sd, ymax=average+sd), width=1.1, size=1, alpha=1)+
     # plot the curve
     geom_line(data = fitted_curve, aes(x = conc, y = pm), size = 1.25, color = "black") +
     # plot the actual data
