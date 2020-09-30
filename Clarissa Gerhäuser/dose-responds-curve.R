@@ -74,6 +74,7 @@ read.data <- function(file) {
 
 
 # read in the data 
+# use these three samlpes because we were working at the same bench
 nh <- read.data("nh.txt")
 he <- read.data("he.txt")
 jh <- read.data("jh.txt")
@@ -118,7 +119,7 @@ average <- data.frame(
 )
 
 
-svg("dose-responds-curve-all.svg")
+#svg("dose-responds-curve-all.svg")
 ggplot() +
     # plot error bars
     #geom_errorbar(data=average, aes(x=dose, ymin=average-sd, ymax=average+sd), width=1.1, size=1, alpha=1)+
@@ -135,8 +136,7 @@ ggplot() +
     theme_classic(base_size = 14.5)+
     grids(linetype="dashed")
 
-dev.off()
+#dev.off()
 
-
-
+sessionInfo()
 

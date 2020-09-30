@@ -166,35 +166,44 @@ KO.H4K16ac.DSBIII.enrichment <- mean(KO.H4K16ac.DSBIII$enrichment)
 KO.H4K16ac.DSBIV.enrichment <- mean(KO.H4K16ac.DSBIV$enrichment)
 KO.H4K16ac.DSBV.enrichment <- mean(KO.H4K16ac.DSBV$enrichment)
 
+# calculated enrichments standard derivation for each primer ----
+WT.H4K16ac.DSB3.sd <- sd(WT.H4K16ac.DSB3$enrichment)
+WT.H4K16ac.DSB4.sd <- sd(WT.H4K16ac.DSB4$enrichment)
+WT.H4K16ac.DSBIII.sd <- sd(WT.H4K16ac.DSBIII$enrichment)
+WT.H4K16ac.DSBIV.sd <- sd(WT.H4K16ac.DSBIV$enrichment)
+WT.H4K16ac.DSBV.sd <- sd(WT.H4K16ac.DSBV$enrichment)
 
-
-
-
-
-
-
-
+KO.H4K16ac.DSB3.sd <- sd(KO.H4K16ac.DSB3$enrichment)
+KO.H4K16ac.DSB4.sd <- sd(KO.H4K16ac.DSB4$enrichment)
+KO.H4K16ac.DSBIII.sd <- sd(KO.H4K16ac.DSBIII$enrichment)
+KO.H4K16ac.DSBIV.sd <- sd(KO.H4K16ac.DSBIV$enrichment)
+KO.H4K16ac.DSBV.sd <- sd(KO.H4K16ac.DSBV$enrichment)
+ 
 
 # generate the data frame which will be used for plotting ---- 
 
 overview <- data.frame(
     Genotype = c(rep("WT",5), rep("KO",5)),
-    primer = rep(c("3", "4", "III", "IV", "V"),2),
+    primer = rep(c("DSB-3", "DSB-4", "DSB-III", "DSB-IV", "DSB-V"),2),
     # now the actual enrichments. First WT 3,4,III,IV,V then  KO 3,4,III,IV,V
     enrichment = c(WT.H4K16ac.DSB3.enrichment, WT.H4K16ac.DSB4.enrichment, WT.H4K16ac.DSBIII.enrichment, WT.H4K16ac.DSBIV.enrichment, WT.H4K16ac.DSBV.enrichment,
-                   KO.H4K16ac.DSB3.enrichment, KO.H4K16ac.DSB4.enrichment, KO.H4K16ac.DSBIII.enrichment, KO.H4K16ac.DSBIV.enrichment, KO.H4K16ac.DSBV.enrichment)
+                   KO.H4K16ac.DSB3.enrichment, KO.H4K16ac.DSB4.enrichment, KO.H4K16ac.DSBIII.enrichment, KO.H4K16ac.DSBIV.enrichment, KO.H4K16ac.DSBV.enrichment),
+    sd = c(WT.H4K16ac.DSB3.sd, WT.H4K16ac.DSB4.sd, WT.H4K16ac.DSBIII.sd, WT.H4K16ac.DSBIV.sd, WT.H4K16ac.DSBV.sd,
+           KO.H4K16ac.DSB3.sd, KO.H4K16ac.DSB4.sd, KO.H4K16ac.DSBIII.sd, KO.H4K16ac.DSBIV.sd, KO.H4K16ac.DSBV.sd)
 )
 
 # specify order of the plot
 overview$Genotype <- factor(overview$Genotype, levels = c("WT", "KO"))
 
+#geom_errorbar(data=average, aes(x=dose, ymin=average-sd, ymax=average+sd), width=1.1, size=1, alpha=1)+
+
+
 # plot the dataframe ---- 
-
-#svg("RTqPCR.svg")
-ggplot(overview, aes(x=primer, y=enrichment, fill=Genotype, width=0.8))+
-    geom_bar(stat="identity", position = "dodge")+
+ggplot(data = overview, aes(x=primer, y=enrichment, fill=Genotype))+
+    geom_errorbar(aes(ymin = enrichment-sd, ymax=enrichment+sd),
+                  position=position_dodge(0.8), width=0.4, size=1.23)+
+    geom_bar(stat="identity", position=position_dodge(), width=0.8)+
     ylab("Enrichment")+
-    xlab("Primer pair")+
-    scale_fill_manual(values = c("black", "#818181"))
-#dev.off()
-
+    xlab("")+
+    scale_fill_manual(values = c("black", "#818181"))+
+    theme_classic(base_size = 14.5)
