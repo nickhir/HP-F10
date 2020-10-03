@@ -195,15 +195,17 @@ overview <- data.frame(
 # specify order of the plot
 overview$Genotype <- factor(overview$Genotype, levels = c("WT", "KO"))
 
-#geom_errorbar(data=average, aes(x=dose, ymin=average-sd, ymax=average+sd), width=1.1, size=1, alpha=1)+
-
 
 # plot the dataframe ---- 
+
+# svg("qRT PCR H4.svg")
 ggplot(data = overview, aes(x=primer, y=enrichment, fill=Genotype))+
     geom_errorbar(aes(ymin = enrichment-sd, ymax=enrichment+sd),
-                  position=position_dodge(0.8), width=0.4, size=1.23)+
-    geom_bar(stat="identity", position=position_dodge(), width=0.8)+
-    ylab("Enrichment")+
+                  position=position_dodge(0.45), width=0.3, size=1.23)+
+    geom_bar(stat="identity", position=position_dodge(), width=0.45)+
+    ylab("Enrichment of input [%]")+
     xlab("")+
-    scale_fill_manual(values = c("black", "#818181"))+
-    theme_classic(base_size = 14.5)
+    scale_fill_manual(values = c("black", "#919191"))+
+    theme_classic(base_size = 14.5)+
+    scale_y_continuous(expand = c(0, 0), limits = c(0, 6), breaks = seq(0,6,by=1))
+# dev.off()
