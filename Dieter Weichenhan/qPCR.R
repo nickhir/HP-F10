@@ -1,8 +1,7 @@
 library(ggplot2)
 library(readxl)
 library(dplyr)
-
-
+library(ggpubr)
 # read in excel file which contains qPCR results (provided by Supervisor)
 setwd("data/")
 excel <- read_excel(path = "Course_MCiPqPCR9_9_20.xls")
@@ -11,9 +10,13 @@ excel <- read_excel(path = "Course_MCiPqPCR9_9_20.xls")
 # also select rows that are relevant for us. In this case all rows containing A (standard), B(SNRPN)
 # and H (spike in)
 
-standard <- excel %>%
+standard_gene <- excel %>%
     select(c("Pos", "Sample", "Ct")) %>%
     filter(grepl("A\\d+", Pos))
+
+standard_spike <- excel %>%
+    select(c("Pos", "Sample", "Ct")) %>%
+    filter(grepl("F\\d+", Pos))
 
 gene <- excel %>%
     select(c("Pos", "Sample", "Ct")) %>%
@@ -24,11 +27,11 @@ spike <- excel %>%
     filter(grepl("J\\d+", Pos))
 
 # for standard we have to convert column Sample to double instead of chr
-standard$Sample <- as.double(standard$Sample)
+standard_gene$Sample <- as.double(standard_gene$Sample)
 
 
 # calculate regression equation
-lm_eqn <- lm(standard$Ct ~ standard$Sample)
+lm_eqn <- lm(standard_gene$Ct ~ standard_gene$Sample)
 
 metrics <- list(
     a = format(unname(coef(lm_eqn)[1]), digits = 2),
@@ -36,28 +39,33 @@ metrics <- list(
     r2 = format(summary(lm_eqn)$r.squared, digits = 3)
 )
 
-eq <-
-    substitute(italic(C[T]) == a * " " * b  * italic(x) * ", " ~  ~ italic(R) ^
-                   2 ~ "=" ~ r2,
+eq <- substitute(italic(C[T]) == a * " " * b  * italic(x) * ", " ~  ~ italic(R) ^ 2 ~ "=" ~ r2,
                metrics)
+
 equation <- as.character(as.expression(eq))
 
 
 # plot the standard (row A)
 
 # svg("images/StandardCurve.svg")
-ggplot(standard, aes(x = Sample, y = Ct)) +
+ggplot(standard_gene, aes(x = Sample, y = Ct)) +
     geom_smooth(method = "lm", se = T) +
     geom_point() +
     xlab("Log Concentration") +
     ylab(bquote(C[T])) +
     geom_text(
         x = -0.6,
-        y = 26.21,
+        y = 28.21,
         label = equation,
         parse = T,
         size = 6.7
-    )
+    ) +
+    theme_classic(base_size = 14.5)+
+    scale_y_continuous(limits = c(20, 30))+
+    grids(linetype="dashed")+
+    ggtitle("Standard SNRPN")+
+    theme(plot.title = element_text(hjust = 0.5))
+
 # dev.off()
 
 # use the regression equation (CT-20.967/-2.945 = Conc) to calculate the log concentration of our gene and spike in
@@ -122,7 +130,12 @@ ggplot(gene, aes(x = Sample, y = AverageRelConc, fill = Genotype)) +
         expand = c(0, 0),
         limits = c(0, 0.5),
         breaks = seq(0, 0.5, by = 0.1)
-    )
+    )+
+    theme_classic(base_size = 14.5)+
+    grids(linetype="dashed")+
+    ggtitle("Enrichment SNRPN")+
+    theme(plot.title = element_text(hjust = 0.5))
+
 # dev.off()
 
 # plot the average Rel concentration for the spike
@@ -140,6 +153,10 @@ ggplot(spike, aes(x = Sample, y = AverageRelConc, fill = Genotype)) +
              width = 0.45) +
     ylab("Relative Concentration") +
     scale_fill_manual(values = c("black", "#818181")) +
-    scale_y_continuous(expand = c(0, 0), limits = c(0, 2.5))
+    scale_y_continuous(expand = c(0, 0), limits = c(0, 2.5))+
+    theme_classic(base_size = 14.5)+
+    grids(linetype="dashed")+
+    ggtitle("Enrichment SNRPN")+
+    theme(plot.title = element_text(hjust = 0.5))
 # dev.off()
 
